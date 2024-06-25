@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "406864066313",
+    "project_id": "worksheetportifolio",
+    "storage_bucket": "worksheetportifolio.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:406864066313:android:1db372c6983391ca3445d8",
+        "android_client_info": {
+          "package_name": "com.worksheetportiflio"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC1yZIWzXpnhbzk_hINqOrnr-DIGR9ExFQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
