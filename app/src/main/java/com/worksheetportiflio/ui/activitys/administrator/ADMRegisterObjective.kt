@@ -13,14 +13,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDatePickerState
@@ -56,27 +54,22 @@ fun ADMRegisterObjective(
     localUserData: LocalUserData,
 ) {
 
+    LaunchedEffect(key1 = registerObjectiveViewModel.name) { registerObjectiveViewModel.loadName() }
+    LaunchedEffect(key1 = registerObjectiveViewModel.personal) { registerObjectiveViewModel.loadPersonal() }
+    LaunchedEffect(key1 = registerObjectiveViewModel.objective) { registerObjectiveViewModel.loadObjective() }
+    LaunchedEffect(key1 = registerObjectiveViewModel.selectedDate) { registerObjectiveViewModel.loadDate() }
 
-    LaunchedEffect(key1 = registerObjectiveViewModel.name) {
-        registerObjectiveViewModel.loadStudent()
-    }
     val name by registerObjectiveViewModel.name.collectAsState()
-    val objective by remember { registerObjectiveViewModel.objective }
+    val objective by registerObjectiveViewModel.objective.collectAsState()
     val personal by registerObjectiveViewModel.personal.collectAsState()
-    val selectedDate by remember { registerObjectiveViewModel.selectedDate }
+    val selectedDate by registerObjectiveViewModel.selectedDate.collectAsState()
     val showDatePickerDialog by remember { registerObjectiveViewModel.showDatePickerDialog }
 
     val focusManager = LocalFocusManager.current
     val datePickerState = rememberDatePickerState()
     val email = localUserData.get(Constants.SELECTED_EMAIL_STUDENT)
-    var haveSheetSaved by rememberSaveable {
-        mutableStateOf(registerObjectiveViewModel.haveSheetsSave() ?: false)
-    }
-
-
 
     findUserIDFromFirestore(cloudDB, email, localUserData)
-    registerObjectiveViewModel.initRegisterObjective()
 
     if (showDatePickerDialog) {
         DatePickerDialog(

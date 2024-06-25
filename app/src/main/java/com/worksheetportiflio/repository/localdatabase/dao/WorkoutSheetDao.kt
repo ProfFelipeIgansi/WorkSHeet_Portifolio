@@ -11,7 +11,7 @@ import com.worksheetportiflio.repository.localdatabase.entity.WorkoutSheet
 @Dao
 interface WorkoutSheetDao {
     @Query("SELECT * FROM workout_sheet")
-    suspend fun getAll(): MutableList<WorkoutSheet>
+    suspend fun getAll(): WorkoutSheet
 
     @Query("SELECT * FROM workout_sheet WHERE idSheet IN (:sheetIds)")
     suspend fun loadAllByIds(sheetIds: List<String>): List<WorkoutSheet>

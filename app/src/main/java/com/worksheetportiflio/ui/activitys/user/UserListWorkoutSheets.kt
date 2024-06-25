@@ -25,6 +25,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateMapOf
@@ -55,10 +56,12 @@ fun UserListWorkoutSheets(
 
     val email = localUserData.get(Constants.EMAIL)
     findUserIDFromFirestore(cloudDB, email, localUserData)
+    LaunchedEffect(key1 = Unit) {
+        viewmodelListWorkoutSheets.loadWorkSheet()
+    }
 
-    viewmodelListWorkoutSheets.initDataFetching()
     val exercises by viewmodelListWorkoutSheets.exercises.observeAsState(initial = listOf())
-    val sheetInformations by viewmodelListWorkoutSheets.workoutSheet.observeAsState(initial = listOf())
+    val sheetInformations by viewmodelListWorkoutSheets.workoutSheet.observeAsState()
     var userInfoWasClicked by remember { mutableStateOf(false) }
 
     val uniqueExercises = exercises.groupBy { it.type }.mapValues { it.value.first() }
@@ -104,12 +107,12 @@ fun UserListWorkoutSheets(
             .padding(padding)
             .fillMaxSize()
     ) {
-        if (sheetInformations.isEmpty()) {
+        if (sheetInformations?.studentName?.isEmpty() == true) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text(text = "Você ainda não possui fichas de treino! :(")
             }
         } else {
-            sheetInformations.forEach { sheetInformation ->
+            exercises.forEach { exercice ->
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -120,10 +123,10 @@ fun UserListWorkoutSheets(
                     )
                 ) {
                     Text(
-                        text = "Aluno: ${sheetInformation.studentName}\n" +
-                                "Personal: ${sheetInformation.personal}\n" +
-                                "Objetivo: ${sheetInformation.objective}\n" +
-                                "Inicio do treino: ${sheetInformation.startDate}",
+                        text = "Aluno: ${sheetInformations?.studentName}\n" +
+                                "Personal: ${sheetInformations?.personal}\n" +
+                                "Objetivo: ${sheetInformations?.objective}\n" +
+                                "Inicio do treino: ${sheetInformations?.startDate}",
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(10.dp)

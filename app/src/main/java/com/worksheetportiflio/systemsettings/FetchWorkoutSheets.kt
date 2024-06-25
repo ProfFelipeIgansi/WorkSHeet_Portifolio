@@ -11,7 +11,7 @@ suspend fun fetchWorkoutSheets(
     localUserData: LocalUserData
 ): WorkoutSheetModel {
     val querySnapshot = withContext(Dispatchers.IO) {
-        findWorkoutSheet(cloudDB, localUserData)
+        findWorkoutSheet(cloudDB, localUserData.get(Constants.SELECTED_EMAIL_STUDENT))
     }
     return querySnapshot.toObject(WorkoutSheetModel::class.java) ?: WorkoutSheetModel()
 }

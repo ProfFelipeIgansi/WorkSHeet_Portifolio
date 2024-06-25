@@ -12,8 +12,9 @@ import com.worksheetportiflio.repository.localdatabase.entity.WorkoutSheet
 import com.worksheetportiflio.repository.sharedpreferences.LocalUserData
 import com.worksheetportiflio.systemsettings.Constants
 import com.worksheetportiflio.systemsettings.Routes
-import com.worksheetportiflio.systemsettings.fetchWorkoutSheets
 import com.worksheetportiflio.systemsettings.findEmailUser
+import com.worksheetportiflio.systemsettings.findUserIDFromFirestore
+import com.worksheetportiflio.systemsettings.findWorkoutSheet
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -33,18 +34,23 @@ class RegisterObjectiveViewModel(
 ) : ViewModel() {
 
     private val _name = MutableStateFlow("")
-    val name : StateFlow<String> = _name
-    val objective = mutableStateOf("")
+    val name: StateFlow<String> = _name
+
+    private val _objective = MutableStateFlow("")
+    val objective: StateFlow<String> = _objective
+
     private val _personal = MutableStateFlow("")
     val personal: StateFlow<String> = _personal
-    val selectedDate = mutableStateOf("")
+
+    private val _selectedDate = MutableStateFlow("")
+    val selectedDate: StateFlow<String> = _selectedDate
+
     val showDatePickerDialog = mutableStateOf(false)
-    private var listWorkoutSheets = mutableStateOf<WorkoutSheetModel?>(null)
 
     private val sheetDao = localDB.workoutSheetDao()
 
 
-    fun loadStudent() {
+    fun loadName() {
         viewModelScope.launch {
             val querySnapshot = withContext(Dispatchers.IO) {
                 findEmailUser(cloudDB, localUserData.get(Constants.SELECTED_EMAIL_STUDENT))
@@ -56,10 +62,62 @@ class RegisterObjectiveViewModel(
         }
     }
 
-    fun haveSheetsSave() = listWorkoutSheets.value?.objetivo?.isNotEmpty()
+    fun loadPersonal() {
+        viewModelScope.launch {
+            findUserIDFromFirestore(
+                cloudDB,
+                localUserData.get(Constants.SELECTED_EMAIL_STUDENT),
+                localUserData
+            )
+            val querySnapshot = withContext(Dispatchers.IO) {
+                findWorkoutSheet(
+                    cloudDB = cloudDB,
+                    idUser = localUserData.get(Constants.Database.FKID_USER)
+                )
+            }
+            val workoutSheetModel = querySnapshot.toObject(WorkoutSheetModel::class.java)
+            _personal.value = workoutSheetModel?.personal ?: ""
+        }
+    }
+
+    fun loadDate() {
+        viewModelScope.launch {
+            findUserIDFromFirestore(
+                cloudDB,
+                localUserData.get(Constants.SELECTED_EMAIL_STUDENT),
+                localUserData
+            )
+            val querySnapshot = withContext(Dispatchers.IO) {
+                findWorkoutSheet(
+                    cloudDB = cloudDB,
+                    idUser = localUserData.get(Constants.Database.FKID_USER)
+                )
+            }
+            val workoutSheetModel = querySnapshot.toObject(WorkoutSheetModel::class.java)
+            _selectedDate.value = workoutSheetModel?.data ?: ""
+        }
+    }
+
+    fun loadObjective() {
+        viewModelScope.launch {
+            findUserIDFromFirestore(
+                cloudDB,
+                localUserData.get(Constants.SELECTED_EMAIL_STUDENT),
+                localUserData
+            )
+            val querySnapshot = withContext(Dispatchers.IO) {
+                findWorkoutSheet(
+                    cloudDB = cloudDB,
+                    idUser = localUserData.get(Constants.Database.FKID_USER)
+                )
+            }
+            val workoutSheetModel = querySnapshot.toObject(WorkoutSheetModel::class.java)
+            _objective.value = workoutSheetModel?.objetivo ?: ""
+        }
+    }
 
     fun setObjective(value: String) {
-        objective.value = value
+        _objective.value = value
     }
 
     fun setPersonal(value: String) {
@@ -67,27 +125,12 @@ class RegisterObjectiveViewModel(
     }
 
     fun setSelectedDate(value: String) {
-        selectedDate.value = value
+        _selectedDate.value = value
     }
 
 
     fun setShowDatePickerDialog(value: Boolean) {
         showDatePickerDialog.value = value
-    }
-
-    fun initRegisterObjective() {
-        viewModelScope.launch {
-            listWorkoutSheets.value = fetchWorkoutSheets(cloudDB, localUserData)
-            initiateAllVariables()
-        }
-    }
-
-    private fun initiateAllVariables() {
-        if (listWorkoutSheets.value!!.objetivo.isNotEmpty()) {
-            setObjective(listWorkoutSheets.value!!.objetivo)
-            setPersonal(listWorkoutSheets.value!!.personal)
-            setSelectedDate(listWorkoutSheets.value!!.data)
-        }
     }
 
 
@@ -98,7 +141,7 @@ class RegisterObjectiveViewModel(
         calendar.add(Calendar.DAY_OF_MONTH, 1)
         val formattedDate = calendar.timeInMillis.toBrazilianDateFormat()
 
-        selectedDate.value = formattedDate
+        _selectedDate.value = formattedDate
         showDatePickerDialog.value = false
     }
 
@@ -116,10 +159,10 @@ class RegisterObjectiveViewModel(
                 val existingSheet = sheetDao.loadByName(_name.value)
                 val sheet = WorkoutSheet(
                     fkID,
-                    _name.value ?: "",
-                    selectedDate.value,
-                    objective.value,
-                    personal.value
+                    _name.value,
+                    _selectedDate.value,
+                    _objective.value,
+                    _personal.value
                 )
                 if (existingSheet != null) sheetDao.update(sheet)
                 else sheetDao.insertAll(sheet)

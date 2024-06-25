@@ -14,7 +14,10 @@ import com.worksheetportiflio.repository.localdatabase.entity.WorkoutSheet
 import com.worksheetportiflio.repository.sharedpreferences.LocalUserData
 import com.worksheetportiflio.systemsettings.Constants
 import com.worksheetportiflio.systemsettings.fetchWorkoutSheets
+import com.worksheetportiflio.systemsettings.findWorkoutSheet
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class ListWorkoutSheetsViewModel(
     private val cloudDB: FirebaseFirestore,
@@ -25,11 +28,30 @@ class ListWorkoutSheetsViewModel(
     private var _exercises = MutableLiveData<List<Exercise>>()
     val exercises: LiveData<List<Exercise>> get() = _exercises
 
-    private var _workoutSheet = MutableLiveData<List<WorkoutSheet>>()
-    val workoutSheet: LiveData<List<WorkoutSheet>> get() = _workoutSheet
+    private var _workoutSheet = MutableLiveData<WorkoutSheet>()
+    val workoutSheet: LiveData<WorkoutSheet> get() = _workoutSheet
 
     private val exerciseDao = localDB.exerciseDao()
     private val workoutSheetDao = localDB.workoutSheetDao()
+
+    fun loadWorkSheet() {
+        viewModelScope.launch {
+            val querySnapshot = withContext(Dispatchers.IO) {
+                findWorkoutSheet(
+                    cloudDB = cloudDB,
+                    idUser = localUserData.get(Constants.Database.FKID_USER)
+                )
+            }
+            val workoutSheetModel = querySnapshot.toObject(WorkoutSheetModel::class.java)
+            _exercises.value = workoutSheetModel?.exercises
+            _workoutSheet.value = WorkoutSheet(
+                studentName = workoutSheetModel?.nome ?: "",
+                startDate = workoutSheetModel?.data ?: "",
+                objective = workoutSheetModel?.objetivo ?: "",
+                personal = workoutSheetModel?.personal ?: ""
+            )
+        }
+    }
 
     fun initDataFetching() {
         try {
@@ -44,7 +66,7 @@ class ListWorkoutSheetsViewModel(
         }
     }
 
-    private suspend fun setTableValues(){
+    private suspend fun setTableValues() {
         setUserInfosInLocalDB(
             WorkoutSheet(
                 studentName = listWorkoutSheets.value?.nome ?: "",
@@ -67,9 +89,9 @@ class ListWorkoutSheetsViewModel(
 
     private suspend fun setUserInfosInLocalDB(sheetInformations: WorkoutSheet?) {
         try {
-            if (workoutSheetDao.getAll().isNotEmpty())workoutSheetDao.deleteAll()
+            if (workoutSheetDao.getAll().idSheet.isNotEmpty()) workoutSheetDao.deleteAll()
             if (sheetInformations?.studentName!!.isNotEmpty()) {
-                if (workoutSheetDao.getAll().isEmpty()) {
+                if (workoutSheetDao.getAll().idSheet.isEmpty()) {
                     workoutSheetDao.insertAll(sheetInformations)
                 } /*else workoutSheetDao.insertAllWithReplace(sheetInformations)*/
             }
